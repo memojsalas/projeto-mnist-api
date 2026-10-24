@@ -1,12 +1,13 @@
 """
-ConfiguraÁıes da aplicaÁ„o via vari·veis de ambiente.
+Configura√ß√µes da aplica√ß√£o via vari√°veis de ambiente.
 """
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # CORRE√á√ÉO: Adicionado protected_namespaces=() para silenciar o aviso do model_
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", protected_namespaces=())
 
     base_dir: Path = Path(__file__).resolve().parent.parent
     model_path: Path = base_dir / "models" / "mlp_mnist.keras"

@@ -1,5 +1,5 @@
 """
-Rota de monitoramento de saúde.
+Rota de monitoramento de saÃºde.
 """
 import time
 from fastapi import APIRouter, Request

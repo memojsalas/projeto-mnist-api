@@ -1,5 +1,5 @@
 """
-Rota de inferência via JSON (784 pixels).
+Rota de inferÃªncia via JSON (784 pixels).
 """
 from fastapi import APIRouter, HTTPException, Request
 from app.schemas import PredictRequest, PredictResponse
@@ -12,12 +12,12 @@ router = APIRouter()
     "/v1/predict",
     response_model=PredictResponse,
     summary="Classifica a partir de 784 pixels (JSON)",
-    tags=["Inferência"],
+    tags=["InferÃªncia"],
 )
 async def predict(request: Request, payload: PredictRequest) -> PredictResponse:
     service = getattr(request.app.state, "model_service", None)
     if service is None:
-        raise HTTPException(status_code=503, detail="Modelo não está carregado.")
+        raise HTTPException(status_code=503, detail="Modelo nÃ£o estÃ¡ carregado.")
 
     try:
         result = service.predict_from_pixels(payload.pixels)
@@ -29,6 +29,6 @@ async def predict(request: Request, payload: PredictRequest) -> PredictResponse:
             OOD_TOTAL.inc()
         return PredictResponse(**result)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Erro de validação: {e}")
+        raise HTTPException(status_code=400, detail=f"Erro de validaÃ§Ã£o: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro interno: {e}")

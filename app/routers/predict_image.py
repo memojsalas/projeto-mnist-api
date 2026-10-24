@@ -1,5 +1,5 @@
 """
-Rota de inferência via upload de imagem ou base64.
+Rota de inferÃªncia via upload de imagem ou base64.
 """
 import logging
 
@@ -21,7 +21,7 @@ router = APIRouter()
     "/v1/predict/image",
     response_model=PredictResponse,
     summary="Classifica a partir de upload de imagem",
-    tags=["Inferência"],
+    tags=["InferÃªncia"],
 )
 async def predict_from_upload(
     request: Request,
@@ -29,13 +29,13 @@ async def predict_from_upload(
 ) -> PredictResponse:
     service = getattr(request.app.state, "model_service", None)
     if service is None:
-        raise HTTPException(status_code=503, detail="Modelo não está carregado.")
+        raise HTTPException(status_code=503, detail="Modelo nÃ£o estÃ¡ carregado.")
 
     allowed = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
     if file.content_type not in allowed:
         raise HTTPException(
             status_code=415,
-            detail=f"Content-Type não suportado: {file.content_type}.",
+            detail=f"Content-Type nÃ£o suportado: {file.content_type}.",
         )
 
     try:
@@ -55,7 +55,7 @@ async def predict_from_upload(
     except ImageProcessingError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        logger.exception("Erro inesperado na inferência")
+        logger.exception("Erro inesperado na inferÃªncia")
         raise HTTPException(status_code=500, detail=f"Erro interno: {e}")
 
 
@@ -63,7 +63,7 @@ async def predict_from_upload(
     "/v1/predict/base64",
     response_model=PredictResponse,
     summary="Classifica a partir de imagem em base64",
-    tags=["Inferência"],
+    tags=["InferÃªncia"],
 )
 async def predict_from_base64(
     request: Request,
@@ -71,7 +71,7 @@ async def predict_from_base64(
 ) -> PredictResponse:
     service = getattr(request.app.state, "model_service", None)
     if service is None:
-        raise HTTPException(status_code=503, detail="Modelo não está carregado.")
+        raise HTTPException(status_code=503, detail="Modelo nÃ£o estÃ¡ carregado.")
 
     try:
         img = decode_base64_image(payload.image_base64)
@@ -89,5 +89,5 @@ async def predict_from_base64(
     except ImageProcessingError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        logger.exception("Erro inesperado na inferência (base64)")
+        logger.exception("Erro inesperado na inferÃªncia (base64)")
         raise HTTPException(status_code=500, detail=f"Erro interno: {e}")

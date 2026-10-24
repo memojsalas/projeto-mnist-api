@@ -1,5 +1,5 @@
 """
-Camada de serviço: carregamento do modelo e inferência.
+Camada de serviÃ§o: carregamento do modelo e inferÃªncia.
 """
 import json
 import logging
@@ -25,7 +25,7 @@ class ModelService:
     ):
         logger.info("Carregando modelo Keras de %s", model_path)
         self.model = tf.keras.models.load_model(model_path)
-        logger.info("Carregando pipeline de pré-processamento de %s", preprocess_path)
+        logger.info("Carregando pipeline de prÃ©-processamento de %s", preprocess_path)
         self.preprocess = joblib.load(preprocess_path)
         self.model_version = model_version
 

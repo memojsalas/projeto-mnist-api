@@ -1,5 +1,5 @@
 """
-Pipeline de pré-processamento de imagens manuscritas para o formato MNIST.
+Pipeline de prÃ©-processamento de imagens manuscritas para o formato MNIST.
 """
 import io
 import base64
@@ -23,7 +23,7 @@ def decode_base64_image(b64_string: str) -> Image.Image:
     try:
         raw = base64.b64decode(b64_string, validate=True)
     except Exception as e:
-        raise ImageProcessingError(f"Base64 inválido: {e}")
+        raise ImageProcessingError(f"Base64 invÃ¡lido: {e}")
     return load_image_from_bytes(raw)
 
 
@@ -38,10 +38,10 @@ def load_image_from_bytes(raw_bytes: bytes) -> Image.Image:
         img.verify()
         img = Image.open(io.BytesIO(raw_bytes))
     except (UnidentifiedImageError, Exception) as e:
-        raise ImageProcessingError(f"Formato de imagem inválido: {e}")
+        raise ImageProcessingError(f"Formato de imagem invÃ¡lido: {e}")
     if max(img.size) > settings.max_image_dimension:
         raise ImageProcessingError(
-            f"Dimensão máxima permitida: {settings.max_image_dimension}px."
+            f"DimensÃ£o mÃ¡xima permitida: {settings.max_image_dimension}px."
         )
     return img
 
@@ -57,7 +57,7 @@ def preprocess_image(img: Image.Image) -> np.ndarray:
 
     ys, xs = np.where(arr > settings.binarize_threshold)
     if len(xs) == 0:
-        raise ImageProcessingError("Nenhum dígito detectado na imagem.")
+        raise ImageProcessingError("Nenhum dÃ­gito detectado na imagem.")
 
     x0, x1 = xs.min(), xs.max()
     y0, y1 = ys.min(), ys.max()

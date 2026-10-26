@@ -10,7 +10,7 @@ from prometheus_client import make_asgi_app
 
 from app.config import settings
 from app.logging_config import setup_logging
-from app.routers import health, predict, predict_image
+from app.routers import health, predict, predict_image, ui
 from app.services import ModelService
 
 
@@ -48,6 +48,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(predict.router)
 app.include_router(predict_image.router)
+app.include_router(ui.router) 
 app.mount("/metrics", make_asgi_app())
 
 

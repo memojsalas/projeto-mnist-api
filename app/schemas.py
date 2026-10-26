@@ -1,10 +1,9 @@
 """
 Schemas Pydantic para validação estrita.
 """
-from typing import List
+from typing import List, Union
 from pydantic import BaseModel, Field
 
-# CORREÇÃO: Adicionado model_config em todas as classes
 class PredictRequest(BaseModel):
     model_config = {"protected_namespaces": ()}
     pixels: List[float] = Field(
@@ -23,10 +22,15 @@ class PredictBase64Request(BaseModel):
 
 class PredictResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
-    predicted_class: int = Field(..., ge=0, le=9)
+    # ALTERAÇÃO: Aceita número (0-9) ou texto ("Desconhecido")
+    predicted_class: Union[int, str] = Field(
+        ..., 
+        description="Dígito previsto (0-9) ou 'Desconhecido' se for OOD."
+    )
     probabilities: List[float] = Field(..., min_length=10, max_length=10)
     confidence: float = Field(..., ge=0.0, le=1.0)
     is_ood: bool
+    message: str = Field(default="", description="Mensagem amigável sobre o resultado.")
     preprocessed_pixels: List[float] = Field(default_factory=list)
 
 

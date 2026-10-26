@@ -1,5 +1,5 @@
 """
-Camada de serviço: carregamento do modelo e inferência.
+Camada de serviço: carregamento do modelo e inferência com Energy Score OOD.
 """
 import json
 import logging
@@ -40,7 +40,7 @@ class ModelService:
             outputs=logits_layer.output,
         )
         logger.info(
-            "Modelo carregado. T=%.4f, threshold OOD=%.4f",
+            "Modelo carregado. T=%.4f, Energy Threshold=%.4f",
             self.temperature, self.ood_threshold,
         )
 
@@ -50,12 +50,27 @@ class ModelService:
 
         logits = self.logits_model.predict(flat_prep, verbose=0)
         probs = tf.nn.softmax(logits / self.temperature, axis=-1).numpy()[0]
+        energy = -self.temperature * tf.reduce_logsumexp(logits / self.temperature, axis=-1).numpy()[0]
 
+        is_ood = bool(energy > self.ood_threshold)
+
+        # ALTERAÇÃO: Regra de negócio para OOD com mensagem amigável
+        if is_ood:
+            return {
+                "predicted_class": "Desconhecido",
+                "probabilities": [float(p) for p in probs],
+                "confidence": float(np.max(probs)),
+                "is_ood": True,
+                "message": "A imagem não parece ser um dígito válido de 0 a 9."
+            }
+
+        pred_class = int(np.argmax(probs))
         return {
-            "predicted_class": int(np.argmax(probs)),
+            "predicted_class": pred_class,
             "probabilities": [float(p) for p in probs],
             "confidence": float(np.max(probs)),
-            "is_ood": bool(float(np.max(probs)) < self.ood_threshold),
+            "is_ood": False,
+            "message": f"Dígito {pred_class} reconhecido com sucesso."
         }
 
     def predict_from_pixels(self, pixels: list) -> dict:

@@ -48,7 +48,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(predict.router)
 app.include_router(predict_image.router)
-app.include_router(ui.router) 
+app.include_router(ui.router)
 app.mount("/metrics", make_asgi_app())
 
 

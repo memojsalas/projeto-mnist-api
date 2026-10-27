@@ -1,0 +1,6 @@
+Métrica,Valor
+Acurácia Global,0.9783
+Precisão Ponderada,0.9783
+Recall Ponderado,0.9783
+F1-Score Ponderado,0.9783
+"ROC-AUC (OvR, ponderado)",0.9992

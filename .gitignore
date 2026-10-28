@@ -63,33 +63,9 @@ logs/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# ---------- Dados grandes (opcional) ----------
-# Descomente se NÃO quiser versionar dados brutos
-# data/*.npy
-# data/*.npz
-# data/*.csv
-# data/*.zip
-# data/*.gz
-
-# ---------- Modelos grandes (opcional) ----------
-# Descomente se NÃO quiser versionar modelos treinados
-# (recomendado apenas para repos muito grandes)
+# ---------- Dados e Modelos grandes (Opcional) ----------
+# Descomente se NÃO quiser versionar os binários gerados pelo Jupyter
 # models/*.keras
-# models/*.h5
 # models/*.joblib
-# models/*.pkl
-
-# ---------- Docker ----------
-# (mantido para versionar Dockerfile e docker-compose)
-
-# ---------- Cobertura de testes ----------
-.coverage
-coverage.xml
-*.cover
-.hypothesis/
-
-# ---------- Miscelânea ----------
-*.bak
-*.tmp
-*.temp
-*.orig
+# data/*.npy
+# data/*.csv

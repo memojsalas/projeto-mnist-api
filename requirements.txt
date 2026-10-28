@@ -2,20 +2,8 @@
 # Projeto: MNIST Classifier API
 # Python:  3.10.x  (compatível com 3.9 e 3.11)
 # ============================================================
-#
-# AVISO IMPORTANTE
-# Este projeto NÃO funciona com Python 3.12+ porque o TensorFlow
-# 2.15 e o SciKeras 0.12 não possuem wheels para essas versões.
-#
-# Verifique sua versão antes de instalar:
-#     python --version
-#
-# Se estiver em 3.12+, recrie o ambiente com Python 3.10:
-#     py -3.10 -m venv venv          # Windows
-#     python3.10 -m venv venv        # Linux/Mac
-# ============================================================
 
-# ---------- Restrição ativa da versão do Python (checada pelo pip) ----------
+# Restrição ativa da versão do Python (checada pelo pip)
 python_version >= "3.9" and python_version < "3.12"
 
 # ---------- Deep Learning ----------

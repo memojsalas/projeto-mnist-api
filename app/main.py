@@ -10,7 +10,7 @@ from prometheus_client import make_asgi_app
 
 from app.config import settings
 from app.logging_config import setup_logging
-from app.routers import health, predict, predict_image, ui
+from app.routers import health, predict_image, ui # Removido 'predict'
 from app.services import ModelService
 
 
@@ -46,9 +46,8 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
-app.include_router(predict.router)
-app.include_router(predict_image.router)
-app.include_router(ui.router)
+app.include_router(predict_image.router) # Mantém apenas este para inferência
+app.include_router(ui.router)            # Interface Web
 app.mount("/metrics", make_asgi_app())
 
 
@@ -58,8 +57,7 @@ async def root():
         "message": "MNIST Classifier API",
         "docs": "/docs",
         "health": "/health",
-        "predict_json": "/v1/predict",
         "predict_image": "/v1/predict/image",
-        "predict_base64": "/v1/predict/base64",
+        "ui": "/app",
         "metrics": "/metrics",
     }

@@ -1,6 +1,6 @@
 # 🧠 MNIST Classifier API
 
-API REST para classificação de dígitos manuscritos (**MNIST**) com **calibração de probabilidades** (Temperature Scaling) e **detecção de Out-of-Distribution (OOD)**.
+API REST para classificação de dígitos manuscritos (**MNIST**) com **calibração de probabilidades** (Temperature Scaling) e **detecção de anomalias (OOD)** utilizando **Energy Score**.
 
 ![Python](https://img.shields.io/badge/python-3.10-blue)
 ![TensorFlow](https://img.shields.io/badge/tensorflow-2.15-orange)
@@ -13,10 +13,10 @@ API REST para classificação de dígitos manuscritos (**MNIST**) com **calibra�
 
 Este projeto resolve o problema de **classificação automática de dígitos manuscritos (0–9)** a partir de imagens 28×28 em escala de cinza. Além da classificação, a API sinaliza quando uma amostra está **fora da distribuição de treino (OOD)**, aumentando a confiabilidade em produção.
 
-**Pipeline híbrido:**
+**Pipeline Híbrido:**
 
-- **Treinamento:** `sklearn.Pipeline` + `SciKeras` (`KerasClassifier`) — permite `GridSearchCV`, `cross_val_score` e encapsulamento do fluxo.
-- **Produção:** modelo Keras nativo (`.keras`) + pipeline de pré-processamento (`.joblib`) carregados **separadamente** para inicialização rápida.
+- **Treinamento:** `sklearn.Pipeline` + `SciKeras` (`KerasClassifier`) — permitindo o encapsulamento do fluxo e compatibilidade com o ecossistema Scikit-learn.
+- **Produção:** modelo Keras nativo (`.keras`) + pipeline de pré-processamento (`.joblib`) carregados separadamente para inicialização rápida.
 
 ---
 
@@ -24,17 +24,17 @@ Este projeto resolve o problema de **classificação automática de dígitos man
 
 - **Dataset:** MNIST (70.000 imagens 28×28, 10 classes).
 - **Modelo:** MLP com 2 camadas ocultas (512 e 256 neurônios), Dropout 0.3.
-- **Calibração:** Temperature Scaling (pós-treino).
-- **OOD:** Maximum Softmax Probability (MSP) com threshold no percentil 5.
+- **Calibração:** Temperature Scaling (pós-treino) para ajustar a confiança do modelo.
+- **Detecção OOD:** Energy Score (utilizando logits e threshold calculado no percentil 94).
 
 **Métricas no teste (aproximadas):**
 
 | Métrica | Valor |
-|---|---|
-| Acurácia Global | ~0,98 |
-| Precisão Ponderada | ~0,98 |
-| Recall Ponderado | ~0,98 |
-| F1-Score Ponderado | ~0,98 |
+| --- | --- |
+| Acurácia Global | ~0,978 |
+| Precisão Ponderada | ~0,978 |
+| Recall Ponderado | ~0,978 |
+| F1-Score Ponderado | ~0,978 |
 | ROC-AUC (OvR) | ~0,999 |
 
 ---
@@ -46,9 +46,8 @@ Este projeto resolve o problema de **classificação automática de dígitos man
 - **SciKeras 0.12**
 - **FastAPI 0.104 + Pydantic 2.5**
 - **Uvicorn** (ASGI)
-- **Scikit-learn, NumPy, SciPy, Seaborn, Pillow**
+- **Scikit-learn, NumPy, SciPy, Seaborn, Pillow, Joblib**
 - **Prometheus** (métricas)
-- **Docker / Docker Compose** (opcional)
 
 ---
 
@@ -65,18 +64,18 @@ projeto-mnist-api/
 │   ├── main.py                   # Ponto de entrada (lifespan + routers)
 │   ├── metrics.py                # Métricas Prometheus
 │   ├── schemas.py                # Schemas Pydantic (validação estrita)
-│   ├── services.py               # Camada de serviço (carrega modelo + inferência)
+│   ├── services.py               # Camada de serviço (Energy Score + inferência)
 │   └── routers/
 │       ├── __init__.py           # Torna `app.routers` um pacote Python
 │       ├── health.py             # GET /health
-│       ├── predict.py            # POST /v1/predict (JSON de 784 pixels)
-│       └── predict_image.py      # POST /v1/predict/image e /v1/predict/base64
+│       ├── predict_image.py      # POST /v1/predict/image (Único endpoint de inferência)
+│       └── ui.py                 # Interface Web HTML/JS (GET /app)
 │
 ├── models/                       # Artefatos do modelo (gerados pelo notebook)
 │   ├── mlp_mnist.keras           # Modelo Keras treinado
 │   ├── preprocess_pipeline.joblib# Pipeline de pré-processamento (sklearn)
-│   ├── temperature.json          # Temperatura de calibração (Temperature Scaling)
-│   ├── ood_threshold.json        # Threshold para detecção OOD
+│   ├── temperature.json          # Temperatura de calibração
+│   ├── ood_threshold.json        # Threshold para Energy Score
 │   ├── metrics.csv               # Métricas consolidadas
 │   └── confusion_matrix.png      # Matriz de confusão
 │
@@ -84,50 +83,28 @@ projeto-mnist-api/
 │   └── treinamento_mnist.ipynb   # Treina, calibra, avalia e exporta artefatos
 │
 ├── data/                         # Dados e imagens de teste
-│   └── .gitkeep                  # (opcional) imagens digitalizadas para teste
 │
 ├── tests/                        # Testes automatizados
-│   ├── __init__.py               # Torna `tests` um pacote Python
-│   ├── test_api.py               # Testa /health e /v1/predict
+│   ├── __init__.py               
+│   ├── test_api.py               # Testa /health e /v1/predict/image
 │   ├── test_services.py          # Testa a camada de serviço
 │   └── test_image_processing.py  # Testa o pré-processamento de imagens
 │
 ├── requirements.txt              # Dependências + restrição de Python
-├── Dockerfile                    # Build multi-stage para produção
-├── docker-compose.yml            # API + Prometheus + Grafana
-├── prometheus.yml                # Configuração de scrape do Prometheus
-├── .env.example                  # Exemplo de variáveis de ambiente
 ├── .gitignore                    # Regras de exclusão do Git
-├── .python-version               # Versão do Python (pyenv)
-└── README.md                     # Este arquivo
+└──  Licence                      # Licence 
 ```
-
-### 🔍 Descrição dos módulos principais
-
-| Módulo | Responsabilidade |
-|---|---|
-| `app/main.py` | Cria a aplicação FastAPI, configura `lifespan` (carrega o modelo uma única vez) e inclui os roteadores |
-| `app/config.py` | Centraliza configurações (caminhos, limites de upload, thresholds) via `pydantic-settings` |
-| `app/schemas.py` | Define os contratos de entrada e saída (Pydantic) com validação estrita |
-| `app/services.py` | Carrega `.keras` + `.joblib` + `.json` e executa a inferência calibrada |
-| `app/image_processing.py` | Converte fotos comuns (fundo claro, dígito escuro) no formato MNIST |
-| `app/routers/` | Agrupa os endpoints (`/health`, `/v1/predict`, `/v1/predict/image`, `/v1/predict/base64`) |
-| `app/metrics.py` | Contadores e histogramas Prometheus |
-| `app/logging_config.py` | Logs em JSON, prontos para ELK/Datadog/CloudWatch |
-| `tests/` | Testes unitários e de integração com `pytest` + `TestClient` |
-| `notebooks/` | Treinamento, calibração, avaliação e exportação dos artefatos |
 
 ---
 
-## 🚀 Instalação e Execução
+## 🚀 Instalação e Execução Local
 
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/SEU_USUARIO/SEU_REPO.git
-cd SEU_REPO
-```
+git clone https://github.com/memojsalas/projeto-mnist-api.git
 
+```
 ### 2. Criar o ambiente virtual (Python 3.10)
 
 ```bash
@@ -139,7 +116,6 @@ source venv/bin/activate
 py -3.10 -m venv venv
 venv\Scripts\activate
 ```
-
 ### 3. Instalar dependências
 
 ```bash
@@ -147,38 +123,57 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Rodar o servidor
+### 4. Rodar o servidor localmente
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
+*(O servidor estará rodando no endereço `http://localhost:8000`)*
+---
 
-Acesse a documentação interativa: **http://localhost:8000/docs**
+## 🖥️ Como Usar Localmente
+
+Com o servidor rodando, você tem **duas formas** de interagir com o projeto:
+
+### 1. Interface Web (Recomendado para testes visuais)
+
+A API inclui uma interface gráfica amigável construída em HTML/CSS/JS.
+
+1. Abra o seu navegador.
+2. Acesse: **`http://localhost:8000/app`**
+3. **Como usar:**
+   - Clique na caixa tracejada ou arraste uma imagem (PNG/JPG) de um número.
+   - O sistema processará a imagem e exibirá um **Card Verde** (se for um número válido) ou um **Card Amarelo** (se for detectado como OOD, ex: uma letra).
+   - Clique em "Analisar outra imagem" para reiniciar o teste.
+
+### 2. Swagger UI (Recomendado para testar a API REST)
+
+O FastAPI gera uma documentação interativa automática. Como configuramos a API para ter apenas um endpoint de inferência, ele estará destacado.
+
+1. Acesse: **`http://localhost:8000/docs`**
+2. Abra o endpoint `POST /v1/predict/image`.
+3. Clique em **"Try it out"**.
+4. Faça o upload de uma imagem no campo `file`.
+5. Clique em **"Execute"** e veja a resposta JSON.
 
 ---
 
-## 📖 Documentação da API
+## 📖 Endpoints da API
+
+A API foi projetada para ter uma única rota de inferência, focada exclusivamente no upload de imagens.
 
 | Endpoint | Método | Descrição |
-|---|---|---|
+| --- | --- | --- |
 | `/` | GET | Informações gerais |
-| `/health` | GET | Integridade do serviço |
-| `/v1/predict` | POST | Classifica a partir de 784 pixels (JSON) |
-| `/v1/predict/image` | POST | Classifica a partir de upload de imagem |
-| `/v1/predict/base64` | POST | Classifica a partir de imagem em base64 |
+| `/health` | GET | Integridade do serviço e do modelo em memória |
+| `/v1/predict/image` | POST | **Único endpoint de inferência (Upload de imagem)** |
+| `/app` | GET | Interface Web interativa para testes |
 | `/metrics` | GET | Métricas Prometheus |
 | `/docs` | GET | Swagger UI |
-| `/redoc` | GET | ReDoc |
 
-### Exemplo de payload (`POST /v1/predict`)
+### Exemplo de resposta JSON (`/v1/predict/image`)
 
-```json
-{
-  "pixels": [0.0, 0.0, "... 784 valores (0-255) ...", 255.0]
-}
-```
-
-### Exemplo de resposta
+**Se for um número válido (In-Distribution):**
 
 ```json
 {
@@ -186,75 +181,30 @@ Acesse a documentação interativa: **http://localhost:8000/docs**
   "probabilities": [0.001, 0.002, "... 10 valores ..."],
   "confidence": 0.997,
   "is_ood": false,
-  "preprocessed_pixels": ["... 784 valores ..."]
+  "message": "Dígito 7 reconhecido com sucesso."
 }
 ```
 
-### Exemplo com `curl`
+**Se for uma imagem desconhecida (OOD):**
 
-```bash
-# JSON (784 pixels)
-curl -X POST "http://localhost:8000/v1/predict" \
-     -H "Content-Type: application/json" \
-     -d '{"pixels": [0.0, 0.0, "... 784 valores ..."]}'
-
-# Upload de imagem
-curl -X POST "http://localhost:8000/v1/predict/image" \
-     -F "file=@data/digito_teste.png"
-
-# Base64
-curl -X POST "http://localhost:8000/v1/predict/base64" \
-     -H "Content-Type: application/json" \
-     -d '{"image_base64": "iVBORw0KGgo..."}'
+```json
+{
+  "predicted_class": "Desconhecido",
+  "probabilities": [0.1, 0.05, "... 10 valores ..."],
+  "confidence": 0.45,
+  "is_ood": true,
+  "message": "A imagem não parece ser um dígito válido de 0 a 9."
+}
 ```
-
-### Exemplo com Python
-
-```python
-import requests
-
-with open("data/digito_teste.png", "rb") as f:
-    r = requests.post(
-        "http://localhost:8000/v1/predict/image",
-        files={"file": ("digito.png", f, "image/png")},
-    )
-print(r.json())
-```
-
----
-
-## 🐳 Docker
-
-```bash
-# Build e execução
-docker compose up --build
-
-# Apenas a API
-docker build -t mnist-api .
-docker run -p 8000:8000 mnist-api
-```
-
-Serviços disponíveis:
-
-| Serviço | Porta | URL |
-|---|---|---|
-| API | 8000 | http://localhost:8000 |
-| Prometheus | 9090 | http://localhost:9090 |
-| Grafana | 3000 | http://localhost:3000 (admin/admin) |
-
 ---
 
 ## 🧪 Testes
 
+Para rodar os testes automatizados (que cobrem o modelo, o pré-processamento e as respostas da API):
+
 ```bash
 pytest tests/ -v
 ```
-
----
-
-## 🎥 Vídeo de Demonstração
-
-📹 **[Assista no Google Drive](COLE_O_LINK_AQUI)**
 
 ---
 
@@ -266,6 +216,6 @@ Este projeto está licenciado sob a **MIT License**.
 
 ## 👤 Autor
 
-**Seu Nome**
-📧 seu.email@exemplo.com
-🔗 [GitHub](https://github.com/SEU_USUARIO)
+**Guillermo J Salas Avila**
+📧 <memojsalas@gmail.com>
+🔗 [GitHub](https://github.com/memojsalas)

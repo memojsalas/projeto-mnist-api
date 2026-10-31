@@ -19,8 +19,14 @@ router = APIRouter()
 @router.post(
     "/v1/predict/image",
     response_model=PredictResponse,
-    summary="Classifica um dígito a partir de uma imagem enviada por upload",
+    summary="Classifica a partir de upload de imagem",
+    description="Envie uma imagem PNG ou JPEG contendo um dígito manuscrito (0-9). O sistema também detectará se a imagem não for um número (OOD).",
     tags=["Inferência"],
+    responses={
+        200: {"description": "Predição realizada com sucesso (Dígito válido ou OOD)."},
+        415: {"description": "Tipo de arquivo não suportado. Envie apenas PNG ou JPEG."},
+        422: {"description": "Imagem inválida ou nenhum dígito detectado na imagem."},
+    }
 )
 async def predict_from_upload(
     request: Request,

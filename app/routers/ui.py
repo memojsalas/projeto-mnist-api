@@ -53,16 +53,14 @@ async def interface_grafica():
             .progress-bar { background-color: rgba(0,0,0,0.1); border-radius: 999px; height: 8px; width: 100%; overflow: hidden; }
             .progress-fill { height: 100%; border-radius: 999px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); width: 0%; }
 
-            /* Cores de Status */
             .status-valid { background-color: #ecfdf5; border: 1px solid #10b981; color: #065f46; }
             .status-valid .progress-fill { background-color: #10b981; }
             
             .status-ood { background-color: #fffbeb; border: 1px solid #f59e0b; color: #92400e; }
             .status-ood .progress-fill { background-color: #f59e0b; }
 
-            /* NOVO: Cor de Erro (Imagem Inválida) */
             .status-error { background-color: #fef2f2; border: 1px solid #ef4444; color: #991b1b; }
-            .status-error .progress-fill { display: none; } /* Esconde a barra de progresso */
+            .status-error .progress-fill { display: none; }
 
             .loading { display: none; color: var(--primary); font-weight: 600; margin-top: 15px; }
 
@@ -96,7 +94,7 @@ async def interface_grafica():
 
             <div id="result" class="result-card">
                 <div class="result-content">
-                    <div class="result-image-container">
+                    <div class="result-image-container" id="image-container">
                         <img id="result-img" src="" alt="Imagem">
                     </div>
                     <div class="result-details">
@@ -149,8 +147,9 @@ async def interface_grafica():
             function preventDefaults (e) { e.preventDefault(); e.stopPropagation(); }
 
             async function processFile(file) {
+                // NOVO: Se não for imagem, renderiza o Card Vermelho na tela (sem alert do navegador)
                 if (!file.type.startsWith('image/')) {
-                    alert("Por favor, envie apenas arquivos de imagem.");
+                    renderError("O arquivo enviado não é uma imagem válida (Ex: PDF, TXT).", file);
                     return;
                 }
 
@@ -173,13 +172,11 @@ async def interface_grafica():
                     const data = await response.json();
 
                     if (!response.ok) {
-                        // NOVO: Se a API retornou erro (ex: 422), joga a mensagem exata dela para o renderResult
                         throw new Error(data.detail || "Erro desconhecido na API.");
                     }
                     
                     renderResult(data, file);
                 } catch (error) {
-                    // NOVO: Renderiza o card de erro em vermelho em vez de dar alert genérico
                     renderError(error.message, file);
                 } finally {
                     document.getElementById('loading').style.display = "none";
@@ -194,8 +191,10 @@ async def interface_grafica():
                 const confidenceText = document.getElementById('result-confidence-text');
                 const progress = document.getElementById('result-progress');
                 const progressContainer = document.getElementById('progress-container');
+                const imageContainer = document.getElementById('image-container');
                 const resetBtn = document.getElementById('reset-btn');
 
+                imageContainer.style.display = "flex";
                 img.src = URL.createObjectURL(file);
                 title.innerText = "Previsão: " + data.predicted_class;
                 message.innerText = data.message;
@@ -224,25 +223,32 @@ async def interface_grafica():
                 setTimeout(() => { progress.style.width = confPct + "%"; }, 100);
             }
 
-            // NOVO: Função dedicada a mostrar erros (imagem em branco, etc) na tela
             function renderError(errorMessage, file) {
                 const card = document.getElementById('result');
                 const img = document.getElementById('result-img');
                 const title = document.getElementById('result-title');
                 const message = document.getElementById('result-message');
                 const progressContainer = document.getElementById('progress-container');
+                const imageContainer = document.getElementById('image-container');
                 const resetBtn = document.getElementById('reset-btn');
 
-                img.src = URL.createObjectURL(file);
-                title.innerText = "❌ Imagem Inválida";
+                // Se for um arquivo válido (ex: imagem em branco), mostra a imagem. Se for TXT, esconde a imagem.
+                if (file && file.type.startsWith('image/')) {
+                    img.src = URL.createObjectURL(file);
+                    imageContainer.style.display = "flex";
+                } else {
+                    imageContainer.style.display = "none";
+                }
+
+                title.innerText = "❌ Falha no Processamento";
                 message.innerText = errorMessage;
-                progressContainer.style.display = "none"; // Esconde a barra de confiança
+                progressContainer.style.display = "none";
 
                 card.className = "result-card status-error";
                 card.style.display = "block";
                 
                 document.getElementById('upload-icon').innerText = "❌";
-                document.getElementById('upload-subtext').innerText = "Falha no processamento";
+                document.getElementById('upload-subtext').innerText = "Arquivo rejeitado";
                 resetBtn.style.display = "block";
             }
 

@@ -1,4 +1,4 @@
-# 🧠 MNIST Classifier API
+# MNIST Classifier API
 
 API REST para classificação de dígitos manuscritos (**MNIST**) com **calibração de probabilidades** (Temperature Scaling) e **detecção de anomalias (OOD)** utilizando **Energy Score**.
 
